@@ -1,0 +1,126 @@
+openapi: 3.0.3
+info:
+  title: Fitness Tracker API
+  version: "v0.1.0"
+  description: |
+    API for authentication, calorie logging, history retrieval, and exercise suggestions.
+    Course: CSCI 487 | Instructor: Benjamin Standfield | Date: October 15, 2025
+servers:
+  - url: http://localhost:3000/api
+paths:
+  /auth/login:
+    post:
+      summary: Log in a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+        "401":
+          description: Invalid credentials
+  /calories:
+    post:
+      summary: Log a calorie entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mealType, calories]
+              properties:
+                mealType:
+                  type: string
+                  enum: [breakfast, lunch, dinner, snack]
+                calories:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  message:
+                    type: string
+    get:
+      summary: View calorie history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: {"type":"string"}
+                    date: {"type":"string","format":"date"}
+                    mealType: {"type":"string"}
+                    calories: {"type":"integer"}
+                    notes: {"type":"string"}
+  /exercises/suggest:
+    get:
+      summary: Get suggested exercises
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Suggestions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    exerciseName: {"type":"string"}
+                    durationMinutes: {"type":"integer"}
+                    estimatedCalories: {"type":"integer"}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

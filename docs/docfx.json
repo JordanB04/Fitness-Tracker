@@ -1,0 +1,26 @@
+{
+  "metadata": [
+    {
+      "src": [
+        { "files": [ "../src/FitnessTracker.Api/FitnessTracker.Api.csproj" ] }
+      ],
+      "dest": "api",
+      "properties": {
+        "TargetFramework": "net8.0"
+      }
+    }
+  ],
+  "build": {
+    "content": [
+      { "files": [ "index.md" ] },
+      { "files": [ "api/**.yml" ], "src": "api", "dest": "api" }
+    ],
+    "resource": [],
+    "overwrite": [],
+    "dest": "_site",
+    "globalMetadata": {
+      "_appTitle": "Fitness Tracker API"
+    },
+    "template": [ "default" ]
+  }
+}

@@ -4,6 +4,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- Generate XML documentation file for public API documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Place the documentation file next to the build output (obj/bin path will be resolved by MSBuild) -->
+    <DocumentationFile>$(OutputPath)$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
