@@ -1,0 +1,31 @@
+<<<<<<< HEAD
+# Build and cache
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Data persistence JSON files
+data/*.json
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Visual Studio Code
+.vscode/
+=======
+bin/
+obj/
+.vscode/
+.vs/
+*.user
+*.swp
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+*.DS_Store
+.env
+>>>>>>> upstream/main
