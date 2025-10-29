@@ -1,245 +1,215 @@
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using BCrypt.Net;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FitnessTracker.Api.Models;
-using System.Text.Json;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------------
-// 1️⃣ Configure Services
-// ----------------------
+// ---------------------------
+// 1️⃣  Configure JWT + Swagger
+// ---------------------------
+var jwtKey = "SUPER_SECRET_KEY_CHANGE_THIS_64_CHAR_STRING_1234567890_ABCDEFGHIJKLMN";
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = key
+        };
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "Fitness Tracker API",
+        Title = "🏋️‍♂️ Fitness Tracker API",
         Version = "v1",
-        Description = "A RESTful API for tracking calories, exercises, and daily progress with historical summaries and file persistence."
+        Description = "Track calories, workouts, and daily summaries with JWT login/logout."
+    });
+
+    // Add JWT auth button in Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer {token}'",
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
 var app = builder.Build();
 
-// ----------------------
-// 2️⃣ Enable Swagger Always
-// ----------------------
+// ---------------------------
+// 2️⃣  Enable middleware
+// ---------------------------
 app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Fitness Tracker API v1");
-    c.RoutePrefix = "swagger";
-});
-
-// ----------------------
-// 3️⃣ Middleware
-// ----------------------
+app.UseSwaggerUI();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 
-// ----------------------
-// 4️⃣ Persistent Data Setup
-// ----------------------
-
-// File paths
+// ---------------------------
+// 3️⃣  Data persistence setup
+// ---------------------------
 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-var calorieFile = Path.Combine(dataDir, "calorieLogs.json");
-var exerciseFile = Path.Combine(dataDir, "exerciseLogs.json");
-var summaryFile = Path.Combine(dataDir, "summaries.json");
+if (!Directory.Exists(dataDir)) Directory.CreateDirectory(dataDir);
 
-// In-memory data
-var calorieLogs = new List<CalorieLog>();
-var exerciseLogs = new List<ExerciseLog>();
-var summaries = new List<DailySummary>();
+string calorieFile = Path.Combine(dataDir, "calories.json");
+string exerciseFile = Path.Combine(dataDir, "exercises.json");
+string summaryFile = Path.Combine(dataDir, "summaries.json");
+string usersFile = Path.Combine(dataDir, "users.json");
 
-// Load data on startup
-if (File.Exists(calorieFile))
-    calorieLogs = JsonSerializer.Deserialize<List<CalorieLog>>(File.ReadAllText(calorieFile)) ?? new();
+var calorieLogs = File.Exists(calorieFile)
+    ? JsonSerializer.Deserialize<List<CalorieLog>>(File.ReadAllText(calorieFile)) ?? new()
+    : new();
 
-if (File.Exists(exerciseFile))
-    exerciseLogs = JsonSerializer.Deserialize<List<ExerciseLog>>(File.ReadAllText(exerciseFile)) ?? new();
+var exerciseLogs = File.Exists(exerciseFile)
+    ? JsonSerializer.Deserialize<List<ExerciseLog>>(File.ReadAllText(exerciseFile)) ?? new()
+    : new();
 
-if (File.Exists(summaryFile))
-    summaries = JsonSerializer.Deserialize<List<DailySummary>>(File.ReadAllText(summaryFile)) ?? new();
+var summaries = File.Exists(summaryFile)
+    ? JsonSerializer.Deserialize<List<DailySummary>>(File.ReadAllText(summaryFile)) ?? new()
+    : new();
 
-// Helper method to save data
+var users = File.Exists(usersFile)
+    ? JsonSerializer.Deserialize<List<User>>(File.ReadAllText(usersFile)) ?? new()
+    : new();
+
 void SaveData<T>(string path, List<T> data)
 {
-    if (!Directory.Exists(dataDir))
-        Directory.CreateDirectory(dataDir);
-
     var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
     File.WriteAllText(path, json);
 }
 
-// ----------------------
-// 5️⃣ Endpoints
-// ----------------------
-
-// ✅ Health Check
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
-
-// ✅ Add Calorie Log with Validation
-app.MapPost("/calories/log", (CalorieLog log) =>
+// ---------------------------
+// 4️⃣  Auth endpoints
+// ---------------------------
+app.MapPost("/register", (User user) =>
 {
-    if (string.IsNullOrWhiteSpace(log.MealName))
-        return Results.BadRequest(new { message = "Meal name is required." });
+    if (users.Any(u => u.Username == user.Username))
+        return Results.BadRequest(new { message = "Username already exists." });
 
-    if (log.Calories <= 0)
-        return Results.BadRequest(new { message = "Calories must be greater than 0." });
+    user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+    users.Add(user);
+    SaveData(usersFile, users);
+
+    return Results.Ok(new { message = "User registered successfully!" });
+});
+
+app.MapPost("/login", (User credentials) =>
+{
+    var user = users.FirstOrDefault(u => u.Username == credentials.Username);
+    if (user == null || !BCrypt.Net.BCrypt.Verify(credentials.Password, user.Password))
+        return Results.Unauthorized();
+
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.Name, user.Username)
+    };
+
+    var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+        claims: claims,
+        expires: DateTime.Now.AddHours(4),
+        signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+    );
+
+    string jwt = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+
+    return Results.Ok(new { token = jwt });
+});
+
+app.MapPost("/logout", () => Results.Ok(new { message = "Logged out successfully (handled client-side)" }));
+
+// ---------------------------
+// 5️⃣  Fitness tracking endpoints
+// ---------------------------
+app.MapPost("/calories", (CalorieLog log, ClaimsPrincipal user) =>
+{
+    if (user.Identity == null || !user.Identity.IsAuthenticated)
+        return Results.Unauthorized();
 
     log.Date = DateTime.Now;
+    log.Username = user.Identity.Name ?? "Unknown";
     calorieLogs.Add(log);
     SaveData(calorieFile, calorieLogs);
 
-    return Results.Created("/calories/log", new
-    {
-        message = "Calorie log added successfully!",
-        log
-    });
-});
+    return Results.Ok(new { message = "Calorie log saved successfully.", log });
+}).RequireAuthorization();
 
-// ✅ View All Calorie Logs
-app.MapGet("/calories/history", () =>
+app.MapPost("/exercises", (ExerciseLog log, ClaimsPrincipal user) =>
 {
-    if (!calorieLogs.Any())
-        return Results.Ok(new { message = "No calorie logs yet." });
-
-    return Results.Ok(calorieLogs);
-});
-
-// ✅ Daily Calorie Progress
-app.MapGet("/progress/daily", () =>
-{
-    if (!calorieLogs.Any())
-        return Results.Ok(new { message = "No logs to summarize." });
-
-    var totalCalories = calorieLogs.Sum(c => c.Calories);
-    return Results.Ok(new
-    {
-        totalCalories,
-        totalMeals = calorieLogs.Count,
-        lastMeal = calorieLogs.Last().MealName,
-        lastCalories = calorieLogs.Last().Calories,
-        lastDate = calorieLogs.Last().Date
-    });
-});
-
-// ----------------------
-// 🏋️ Exercise Tracker
-// ----------------------
-
-// ✅ Add Exercise Log with Validation
-app.MapPost("/exercises/log", (ExerciseLog log) =>
-{
-    if (string.IsNullOrWhiteSpace(log.Workout))
-        return Results.BadRequest(new { message = "Workout name is required." });
-
-    if (log.Duration <= 0)
-        return Results.BadRequest(new { message = "Duration must be greater than 0." });
+    if (user.Identity == null || !user.Identity.IsAuthenticated)
+        return Results.Unauthorized();
 
     log.Date = DateTime.Now;
+    log.Username = user.Identity.Name ?? "Unknown";
     exerciseLogs.Add(log);
     SaveData(exerciseFile, exerciseLogs);
 
-    return Results.Created("/exercises/log", new
-    {
-        message = "Exercise log added successfully!",
-        log
-    });
-});
+    return Results.Ok(new { message = "Exercise saved successfully.", log });
+}).RequireAuthorization();
 
-// ✅ View All Exercise Logs
-app.MapGet("/exercises/history", () =>
+app.MapGet("/summary", (ClaimsPrincipal user) =>
 {
-    if (!exerciseLogs.Any())
-        return Results.Ok(new { message = "No exercise logs yet." });
+    if (user.Identity == null || !user.Identity.IsAuthenticated)
+        return Results.Unauthorized();
 
-    return Results.Ok(exerciseLogs);
-});
-
-// ✅ Exercise Progress Summary
-app.MapGet("/exercises/summary", () =>
-{
-    if (!exerciseLogs.Any())
-        return Results.Ok(new { message = "No workouts recorded." });
-
-    var totalDuration = exerciseLogs.Sum(e => e.Duration);
-    return Results.Ok(new
-    {
-        totalDuration,
-        totalWorkouts = exerciseLogs.Count,
-        lastWorkout = exerciseLogs.Last().Workout,
-        lastDuration = exerciseLogs.Last().Duration,
-        lastDate = exerciseLogs.Last().Date
-    });
-});
-
-// ✅ Combined Daily Summary with Historical Storage + Persistence
-app.MapGet("/summary", () =>
-{
-    if (!calorieLogs.Any() && !exerciseLogs.Any())
-        return Results.Ok(new { message = "No calorie or exercise logs found." });
-
-    var today = DateTime.Now.ToString("yyyy-MM-dd");
-    var totalCalories = calorieLogs.Sum(c => c.Calories);
-    var totalMeals = calorieLogs.Count;
-    var totalDuration = exerciseLogs.Sum(e => e.Duration);
-    var totalWorkouts = exerciseLogs.Count;
+    string username = user.Identity.Name ?? "Unknown";
+    var userCalories = calorieLogs.Where(c => c.Username == username);
+    var userExercises = exerciseLogs.Where(e => e.Username == username);
 
     var summary = new DailySummary
     {
-        Date = today,
-        TotalCalories = totalCalories,
-        TotalMeals = totalMeals,
-        TotalDuration = totalDuration,
-        TotalWorkouts = totalWorkouts,
-        LastMeal = calorieLogs.LastOrDefault()?.MealName ?? "N/A",
-        LastWorkout = exerciseLogs.LastOrDefault()?.Workout ?? "N/A"
+        Date = DateTime.Now.ToString("yyyy-MM-dd"),
+        TotalCalories = userCalories.Sum(c => c.Calories),
+        TotalMeals = userCalories.Count(),
+        TotalDuration = userExercises.Sum(e => e.Duration),
+        TotalWorkouts = userExercises.Count(),
+        LastMeal = userCalories.LastOrDefault()?.MealName ?? "N/A",
+        LastWorkout = userExercises.LastOrDefault()?.Workout ?? "N/A"
     };
 
-    // Save or update today's summary
-    var existing = summaries.FirstOrDefault(s => s.Date == today);
-    if (existing == null)
-        summaries.Add(summary);
-    else
-    {
-        existing.TotalCalories = totalCalories;
-        existing.TotalMeals = totalMeals;
-        existing.TotalDuration = totalDuration;
-        existing.TotalWorkouts = totalWorkouts;
-        existing.LastMeal = summary.LastMeal;
-        existing.LastWorkout = summary.LastWorkout;
-    }
-
-    // Persist summaries
+    summaries.Add(summary);
     SaveData(summaryFile, summaries);
 
-    return Results.Ok(new
-    {
-        message = "Daily summary generated successfully.",
-        summary
-    });
-});
+    return Results.Ok(summary);
+}).RequireAuthorization();
 
-// ✅ View All Saved Summaries
-app.MapGet("/summary/history", () =>
-{
-    if (!summaries.Any())
-        return Results.Ok(new { message = "No summaries saved yet." });
+// ---------------------------
+// 6️⃣  Health check
+// ---------------------------
+app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTime.Now }));
 
-    return Results.Ok(summaries);
-});
-
-// ✅ View Summary by Date (e.g., /summary/2025-10-27)
-app.MapGet("/summary/{date}", (string date) =>
-{
-    var result = summaries.FirstOrDefault(s => s.Date == date);
-    if (result == null)
-        return Results.NotFound(new { message = $"No summary found for {date}." });
-
-    return Results.Ok(result);
-});
-
-// ----------------------
-// 6️⃣ Run App
-// ----------------------
-app.Run();
+// ---------------------------
+// 7️⃣  Run + open Swagger
+// ---------------------------
+await app.RunAsync("http://localhost:8080");
