@@ -1,24 +1,20 @@
-# 🏋️‍♀️ Fitness Tracker API  
-**ASP.NET Core 8.0 | C# | Docker | JWT Authentication**
+# 🏋️‍♀️ Fitness Tracker API
 
-The **Fitness Tracker API** helps users track daily calorie intake, view meal history, and receive exercise recommendations.  
-Built with **ASP.NET Core Web API**, it demonstrates secure authentication, clean architecture, and Dockerized deployment for consistent performance.
+A lightweight **.NET 8 Minimal API** that tracks calories, exercises, and daily summaries — designed for simplicity, persistence, and easy integration with Swagger UI.
 
 ---
 
-### 🚀 Features
-- 🔐 JWT-based user authentication  
-- 🍎 Log and retrieve calorie entries  
-- 🏋️ Exercise recommendations  
-- 💓 Health check endpoint (`/health`)  
-- 🧪 xUnit testing + Swagger documentation  
-- 🐳 Docker support for easy setup  
+## 🚀 Features
+
+✅ Track calorie intake with date and meal details  
+✅ Log workout sessions with duration and type  
+✅ View total calories and workout progress  
+✅ Generate daily summaries (auto-saves to JSON)  
+✅ Persistent data storage using local JSON files  
+✅ Interactive API documentation (Swagger UI)  
+✅ Auto-launches Swagger on startup at [http://localhost:8080](http://localhost:8080)
 
 ---
 
-### ⚙️ Run Locally
-```bash
-dotnet restore
-dotnet build
-dotnet run --project src/FitnessTracker.Api/FitnessTracker.Api.csproj
-http://localhost:8080/swagger
+## 🧱 Project Structure
+

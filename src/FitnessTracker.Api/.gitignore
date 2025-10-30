@@ -1,22 +1,24 @@
-# Build and cache
 bin/
 obj/
 .vs/
-.vscode/
 *.user
-*.suo
 *.swp
+*.suo
 *.userosscache
 *.sln.docstates
 TestResults/
 .env
 
+# Build / cache
+bin/
+obj/
+
 # Data persistence JSON files
 data/*.json
 
-# OS-specific files
+# OS-specific
 .DS_Store
 Thumbs.db
 
-# Visual Studio Code
+# VS Code
 .vscode/

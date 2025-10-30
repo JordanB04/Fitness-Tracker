@@ -1,4 +1,5 @@
-namespace FitnessTracker.Api.Models
+namespace FitnessTracker.Models;
+
 {
     public class ExerciseLog
     {
