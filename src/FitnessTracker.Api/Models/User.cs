@@ -1,6 +1,4 @@
-namespace FitnessTracker.Models;
-
-
+namespace FitnessTracker.Api.Models
 {
     public class User
     {

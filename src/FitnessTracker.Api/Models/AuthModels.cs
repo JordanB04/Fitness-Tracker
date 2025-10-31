@@ -1,12 +1,8 @@
-namespace FitnessTracker.Models;
-
-
-public record RegisterRequest(string Username, string Password);
-public record LoginRequest(string Username, string Password);
-
-public class User
+namespace FitnessTracker.Api.Models
 {
-    public string Id { get; set; } = default!;
-    public string Username { get; set; } = default!;
-    public string PasswordHash { get; set; } = default!;
+    // Represents a registration request body
+    public record RegisterRequest(string Username, string Password);
+
+    // Represents a login request body
+    public record LoginRequest(string Username, string Password);
 }

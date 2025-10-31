@@ -1,20 +1,8 @@
 # 🏋️‍♀️ Fitness Tracker API
 
-A lightweight **.NET 8 Minimal API** that tracks calories, exercises, and daily summaries — designed for simplicity, persistence, and easy integration with Swagger UI.
+A simple **.NET 8 Minimal API** to log calories, workouts, and user accounts.
 
----
-
-## 🚀 Features
-
-✅ Track calorie intake with date and meal details  
-✅ Log workout sessions with duration and type  
-✅ View total calories and workout progress  
-✅ Generate daily summaries (auto-saves to JSON)  
-✅ Persistent data storage using local JSON files  
-✅ Interactive API documentation (Swagger UI)  
-✅ Auto-launches Swagger on startup at [http://localhost:8080](http://localhost:8080)
-
----
-
-## 🧱 Project Structure
-
+### 🚀 Run locally
+```bash
+dotnet build
+dotnet run --project src/FitnessTracker.Api/FitnessTracker.Api.csproj --urls=http://localhost:8080

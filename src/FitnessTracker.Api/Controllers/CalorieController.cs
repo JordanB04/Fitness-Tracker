@@ -1,55 +1,36 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FitnessTracker.Models;
-using System.Text.Json;
+using FitnessTracker.Api.Models;
 
 namespace FitnessTracker.Api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("calories")]
     [Authorize]
     public class CalorieController : ControllerBase
     {
-        private static readonly string DataPath = Path.Combine("Data", "CalorieData.json");
-
-        private List<CalorieLog> LoadLogs()
-        {
-            if (!System.IO.File.Exists(DataPath))
-                return new List<CalorieLog>();
-
-            var json = System.IO.File.ReadAllText(DataPath);
-            return string.IsNullOrWhiteSpace(json) ? new List<CalorieLog>() :
-                JsonSerializer.Deserialize<List<CalorieLog>>(json) ?? new List<CalorieLog>();
-        }
-
-        private void SaveLogs(List<CalorieLog> logs)
-        {
-            var json = JsonSerializer.Serialize(logs, new JsonSerializerOptions { WriteIndented = true });
-            System.IO.File.WriteAllText(DataPath, json);
-        }
+        private static readonly List<CalorieLog> Logs = new();
 
         [HttpPost("add")]
-        public IActionResult AddEntry(CalorieLog log)
+        public IActionResult AddLog([FromBody] CalorieLog log)
         {
-            var logs = LoadLogs();
-            logs.Add(log);
-            SaveLogs(logs);
-            return Ok("Calorie log added successfully!");
+            log.Date = DateTime.Now;
+            Logs.Add(log);
+            return Ok(new { message = "Log added successfully", log });
         }
 
-        [HttpGet("all")]
-        public IActionResult GetAllEntries()
+        [HttpGet("list")]
+        public IActionResult GetLogs(string username)
         {
-            var logs = LoadLogs();
-            return Ok(logs);
+            var userLogs = Logs.Where(l => l.Username == username).ToList();
+            return Ok(userLogs);
         }
 
-        [HttpGet("total")]
-        public IActionResult GetTotalCalories()
+        [HttpGet("summary")]
+        public IActionResult GetSummary(string username)
         {
-            var logs = LoadLogs();
-            var total = logs.Sum(c => c.Calories);
-            return Ok(new { totalCalories = total });
+            var totalCalories = Logs.Where(l => l.Username == username).Sum(l => l.Calories);
+            return Ok(new { username, totalCalories });
         }
     }
 }
