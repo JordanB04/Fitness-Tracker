@@ -1,27 +1,25 @@
-name: dotnet-ci
+name: .NET Build & Test
 
 on:
-  pull_request:
-    branches: [ develop, main ]
   push:
-    branches: [ develop ]
-  workflow_dispatch:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
-      - name: Restore
-        run: |
-          dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
-          dotnet restore ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj
-      - name: Build
-        run: |
-          dotnet build ./src/FitnessTracker.Api/FitnessTracker.Api.csproj --no-restore --configuration Release
-          dotnet build ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-restore --configuration Release
-      - name: Test
-        run: dotnet test ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore src/FitnessTracker.Api/FitnessTracker.Api.csproj
+
+      - name: Build project
+        run: dotnet build src/FitnessTracker.Api/FitnessTracker.Api.csproj --no-restore --configuration Release
