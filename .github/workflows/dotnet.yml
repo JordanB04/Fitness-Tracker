@@ -1,27 +1,48 @@
 name: dotnet-ci
 
 on:
-  pull_request:
-    branches: [ develop, main ]
   push:
-    branches: [ develop ]
-  workflow_dispatch:
+    branches:
+      - main
+      - fix/*
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      # 1️⃣ Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Set up .NET (use .NET 9.0 SDK)
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
-      - name: Restore
+          dotnet-version: 9.0.x
+
+      # 3️⃣ Restore dependencies
+      - name: Restore API project
+        run: dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
+
+      - name: Restore Test project
+        run: dotnet restore ./src/FitnessTracker.Tests/FitnessTracker.Tests.csproj
+
+      # 4️⃣ Build the solution (Release mode)
+      - name: Build solution
+        run: dotnet build ./src/FitnessTracker.Api/FitnessTracker.Api.csproj --configuration Release --no-restore
+
+      # 5️⃣ Run tests (xUnit or NUnit)
+      - name: Run tests
+        run: dotnet test ./src/FitnessTracker.Tests/FitnessTracker.Tests.csproj --configuration Release --no-build --verbosity normal
+
+      # 6️⃣ (Optional) Publish build artifacts
+      - name: Publish build artifacts
+        if: success()
         run: |
-          dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
-          dotnet restore ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj
-      - name: Build
-        run: |
-          dotnet build ./src/FitnessTracker.Api/FitnessTracker.Api.csproj --no-restore --configuration Release
-          dotnet build ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-restore --configuration Release
-      - name: Test
-        run: dotnet test ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+          mkdir -p build_artifacts
+          cp -r ./src/FitnessTracker.Api/bin/Release/net9.0/* ./build_artifacts/
+        continue-on-error: true
