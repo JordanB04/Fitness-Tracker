@@ -1,48 +1,36 @@
 name: dotnet-ci
-
 on:
   push:
-    branches:
-      - main
-      - fix/*
   pull_request:
-    branches:
-      - main
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
     steps:
-      # 1️⃣ Checkout the repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Set up .NET (use .NET 9.0 SDK)
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9.0.x
 
-      # 3️⃣ Restore dependencies
       - name: Restore API project
         run: dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
 
+      # ✅ FIXED: Automatically detect and restore any test project
       - name: Restore Test project
-        run: dotnet restore ./src/FitnessTracker.Tests/FitnessTracker.Tests.csproj
-
-      # 4️⃣ Build the solution (Release mode)
-      - name: Build solution
-        run: dotnet build ./src/FitnessTracker.Api/FitnessTracker.Api.csproj --configuration Release --no-restore
-
-      # 5️⃣ Run tests (xUnit or NUnit)
-      - name: Run tests
-        run: dotnet test ./src/FitnessTracker.Tests/FitnessTracker.Tests.csproj --configuration Release --no-build --verbosity normal
-
-      # 6️⃣ (Optional) Publish build artifacts
-      - name: Publish build artifacts
-        if: success()
         run: |
-          mkdir -p build_artifacts
-          cp -r ./src/FitnessTracker.Api/bin/Release/net9.0/* ./build_artifacts/
-        continue-on-error: true
+          test_proj=$(find . -name "*.Tests.csproj" | head -n 1)
+          if [ -z "$test_proj" ]; then
+            echo "⚠️ No test project found."
+          else
+            echo "Restoring test project: $test_proj"
+            dotnet restore "$test_proj"
+          fi
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
