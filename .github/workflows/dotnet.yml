@@ -1,27 +1,36 @@
 name: dotnet-ci
-
 on:
-  pull_request:
-    branches: [ develop, main ]
   push:
-    branches: [ develop ]
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
-      - name: Restore
+          dotnet-version: 9.0.x
+
+      - name: Restore API project
+        run: dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
+
+      # ✅ FIXED: Automatically detect and restore any test project
+      - name: Restore Test project
         run: |
-          dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
-          dotnet restore ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj
-      - name: Build
-        run: |
-          dotnet build ./src/FitnessTracker.Api/FitnessTracker.Api.csproj --no-restore --configuration Release
-          dotnet build ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-restore --configuration Release
-      - name: Test
-        run: dotnet test ./tests/FitnessTracker.Tests/FitnessTracker.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage"
+          test_proj=$(find . -name "*.Tests.csproj" | head -n 1)
+          if [ -z "$test_proj" ]; then
+            echo "⚠️ No test project found."
+          else
+            echo "Restoring test project: $test_proj"
+            dotnet restore "$test_proj"
+          fi
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
