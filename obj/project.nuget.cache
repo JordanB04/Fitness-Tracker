@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "DjyQl+OHsOM=",
+  "dgSpecHash": "Dn6cXI6tZjk=",
   "success": true,
-  "projectFilePath": "C:\\Users\\smska\\Fitness-Tracker\\src\\FitnessTracker.Api\\FitnessTracker.Api.csproj",
+  "projectFilePath": "C:\\Users\\smska\\Fitness-Tracker\\FitnessTracker.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\smska\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\smska\\.nuget\\packages\\microsoft.extensions.apidescription.server\\6.0.5\\microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",

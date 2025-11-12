@@ -853,11 +853,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\smska\\Fitness-Tracker\\src\\FitnessTracker.Api\\FitnessTracker.Api.csproj",
+      "projectUniqueName": "C:\\Users\\smska\\Fitness-Tracker\\FitnessTracker.Api.csproj",
       "projectName": "FitnessTracker.Api",
-      "projectPath": "C:\\Users\\smska\\Fitness-Tracker\\src\\FitnessTracker.Api\\FitnessTracker.Api.csproj",
+      "projectPath": "C:\\Users\\smska\\Fitness-Tracker\\FitnessTracker.Api.csproj",
       "packagesPath": "C:\\Users\\smska\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\smska\\Fitness-Tracker\\src\\FitnessTracker.Api\\obj\\",
+      "outputPath": "C:\\Users\\smska\\Fitness-Tracker\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

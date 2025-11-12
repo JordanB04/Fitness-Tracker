@@ -1,0 +1,25 @@
+# ===============================
+# 🌍 Render Deployment Blueprint
+# Fitness Tracker API (.NET 9)
+# ===============================
+
+services:
+  - type: web
+    name: fitness-tracker-api
+    env: dotnet
+    plan: free
+    region: oregon
+
+    buildCommand: |
+      dotnet restore fitness-tracker.sln
+      dotnet build fitness-tracker.sln --configuration Release --no-restore
+      dotnet publish src/FitnessTracker.Api/FitnessTracker.Api.csproj -c Release -o out
+
+    startCommand: |
+      dotnet out/FitnessTracker.Api.dll
+
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:10000

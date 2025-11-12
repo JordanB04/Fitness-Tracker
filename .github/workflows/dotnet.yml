@@ -15,22 +15,18 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
-      - name: Restore API project
-        run: dotnet restore ./src/FitnessTracker.Api/FitnessTracker.Api.csproj
-
-      # ✅ FIXED: Automatically detect and restore any test project
-      - name: Restore Test project
-        run: |
-          test_proj=$(find . -name "*.Tests.csproj" | head -n 1)
-          if [ -z "$test_proj" ]; then
-            echo "⚠️ No test project found."
-          else
-            echo "Restoring test project: $test_proj"
-            dotnet restore "$test_proj"
-          fi
+      - name: Restore all projects
+        run: dotnet restore
 
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run tests
-        run: dotnet test --no-build --verbosity normal
+      - name: Run tests (if found)
+        run: |
+          test_proj=$(find . -name "*.Tests.csproj" | head -n 1)
+          if [ -z "$test_proj" ]; then
+            echo "⚠️ No test project found. Skipping tests."
+          else
+            echo "🧪 Running tests for: $test_proj"
+            dotnet test "$test_proj" --no-build --verbosity normal
+          fi

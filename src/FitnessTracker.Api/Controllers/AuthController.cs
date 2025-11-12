@@ -1,129 +1,86 @@
-<<<<<<< HEAD
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-=======
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using BCrypt.Net;
-using Microsoft.AspNetCore.Mvc;
->>>>>>> origin/main
 using Microsoft.IdentityModel.Tokens;
-using FitnessTracker.Api.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace FitnessTracker.Api.Controllers
 {
     [ApiController]
-<<<<<<< HEAD
-    [Route("auth")]
-    public class AuthController : ControllerBase
-    {
-        private static readonly List<User> Users = new();
-
-        private readonly string jwtKey = "SUPER_SECRET_KEY_CHANGE_THIS_64_CHAR_STRING_1234567890_ABCDEFGHIJKLMN";
-
-        [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterRequest request)
-        {
-            if (Users.Any(u => u.Username == request.Username))
-                return BadRequest("Username already exists");
-
-            Users.Add(new User { Username = request.Username, Password = request.Password });
-            return Ok("User registered successfully");
-        }
-
-        [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
-        {
-            var user = Users.FirstOrDefault(u => u.Username == request.Username && u.Password == request.Password);
-            if (user == null) return Unauthorized("Invalid credentials");
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(jwtKey);
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, request.Username) }),
-                Expires = DateTime.UtcNow.AddHours(2),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-            };
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            return Ok(new { token = tokenHandler.WriteToken(token) });
-=======
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly string _userDataPath = Path.Combine("data", "users.json");
-        private readonly string _jwtSecret;
+        // Dummy in-memory user store for demonstration
+        private static readonly Dictionary<string, string> _users = new()
+        {
+            { "testuser", "password123" }
+        };
+
+        private readonly IConfiguration _config;
 
         public AuthController(IConfiguration config)
         {
-            _jwtSecret = config["JwtKey"] ?? Environment.GetEnvironmentVariable("JWT_SECRET") 
-                ?? "SUPER_SECRET_KEY_CHANGE_THIS_64_CHAR_STRING_1234567890_ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            _config = config;
         }
 
+        /// <summary>
+        /// Register a new user
+        /// </summary>
         [HttpPost("register")]
-        public IActionResult Register([FromBody] User user)
+        public IActionResult Register([FromBody] UserCredentials request)
         {
-            if (string.IsNullOrWhiteSpace(user.Username) || string.IsNullOrWhiteSpace(user.Password))
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
                 return BadRequest("Username and password are required.");
 
-            var users = LoadUsers();
-            if (users.Any(u => u.Username == user.Username))
-                return Conflict("Username already exists.");
+            if (_users.ContainsKey(request.Username))
+                return Conflict("User already exists.");
 
-            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
-            users.Add(user);
-            SaveUsers(users);
-
-            return Ok(new { message = "User registered successfully." });
+            _users.Add(request.Username, request.Password);
+            return Ok("User registered successfully.");
         }
 
+        /// <summary>
+        /// Login and return a JWT token
+        /// </summary>
         [HttpPost("login")]
-        public IActionResult Login([FromBody] User login)
+        public IActionResult Login([FromBody] UserCredentials request)
         {
-            var users = LoadUsers();
-            var user = users.FirstOrDefault(u => u.Username == login.Username);
-
-            if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.Password))
+            if (!_users.TryGetValue(request.Username, out var storedPassword) || storedPassword != request.Password)
                 return Unauthorized("Invalid username or password.");
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_jwtSecret);
+            var token = GenerateJwtToken(request.Username);
+            return Ok(new { token });
+        }
 
-            var tokenDescriptor = new SecurityTokenDescriptor
+        /// <summary>
+        /// Generate a JWT token for authenticated users
+        /// </summary>
+        private string GenerateJwtToken(string username)
+        {
+            var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "super_secret_key_12345");
+            var claims = new[]
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, user.Username)
-                }),
-                Expires = DateTime.UtcNow.AddHours(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                new Claim(ClaimTypes.Name, username),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var jwt = tokenHandler.WriteToken(token);
+            var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer: _config["Jwt:Issuer"],
+                audience: _config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(2),
+                signingCredentials: credentials
+            );
 
-            return Ok(new { token = jwt });
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private List<User> LoadUsers()
+        // Simple DTO for login/register requests
+        public class UserCredentials
         {
-            if (!System.IO.File.Exists(_userDataPath))
-                return new List<User>();
-
-            var json = System.IO.File.ReadAllText(_userDataPath);
-            return string.IsNullOrWhiteSpace(json)
-                ? new List<User>()
-                : System.Text.Json.JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
-        }
-
-        private void SaveUsers(List<User> users)
-        {
-            var json = System.Text.Json.JsonSerializer.Serialize(users, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-            System.IO.File.WriteAllText(_userDataPath, json);
->>>>>>> origin/main
+            public string Username { get; set; } = string.Empty;
+            public string Password { get; set; } = string.Empty;
         }
     }
 }

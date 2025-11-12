@@ -31,3 +31,12 @@ C:\Users\smska\Fitness-Tracker\src\FitnessTracker.Api\obj\Debug\net8.0\refint\Fi
 C:\Users\smska\Fitness-Tracker\src\FitnessTracker.Api\obj\Debug\net8.0\FitnessTracker.Api.pdb
 C:\Users\smska\Fitness-Tracker\src\FitnessTracker.Api\obj\Debug\net8.0\FitnessTracker.Api.genruntimeconfig.cache
 C:\Users\smska\Fitness-Tracker\src\FitnessTracker.Api\obj\Debug\net8.0\ref\FitnessTracker.Api.dll
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.csproj.AssemblyReference.cache
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.AssemblyInfoInputs.cache
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.AssemblyInfo.cs
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.csproj.CoreCompileInputs.cache
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\smska\Fitness-Tracker\obj\Debug\net8.0\FitnessTracker.Api.sourcelink.json
