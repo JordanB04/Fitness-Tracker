@@ -1,0 +1,24 @@
+bin/
+obj/
+.vs/
+*.user
+*.swp
+*.suo
+*.userosscache
+*.sln.docstates
+TestResults/
+.env
+
+# Build / cache
+bin/
+obj/
+
+# Data persistence JSON files
+data/*.json
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
