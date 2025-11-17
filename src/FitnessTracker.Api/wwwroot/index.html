@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Fitness Tracker API - Swagger UI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+    <link rel="icon" href="https://petstore.swagger.io/favicon-32x32.png" type="image/png" />
+    <style>
+        body {
+            margin: 0;
+            background-color: #f8f9fa;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #swagger-ui {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .topbar {
+            background-color: #1e293b !important;
+        }
+
+        .topbar-wrapper img {
+            content: url("https://upload.wikimedia.org/wikipedia/commons/a/ab/Swagger-logo.png");
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .info h2, .info p {
+            color: #1e293b;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function () {
+            window.ui = SwaggerUIBundle({
+                url: "/swagger/v1/swagger.json", // points to your live API spec
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout",
+                docExpansion: "none",
+                defaultModelsExpandDepth: -1,
+                showExtensions: true,
+                showCommonExtensions: true
+            });
+        };
+    </script>
+</body>
+</html>

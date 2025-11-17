@@ -7,13 +7,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using FitnessTracker.Api.Models;
 
-
-
 var builder = WebApplication.CreateBuilder(args);
 
-// ---------------------------
-// 1️⃣  Configure JWT + Swagger
-// ---------------------------
+// ------------------------------------------------------
+// 1️⃣ Configure JWT + Swagger
+// ------------------------------------------------------
 var jwtKey = "SUPER_SECRET_KEY_CHANGE_THIS_64_CHAR_STRING_1234567890_ABCDEFGHIJKLMN";
 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
 
@@ -30,6 +28,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -40,7 +39,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Track calories, workouts, and daily summaries with JWT login/logout."
     });
 
-    // Add JWT auth button in Swagger
+    // JWT button in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -68,26 +67,28 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// ---------------------------
-// 2️⃣  Enable middleware
-// ---------------------------
+// ------------------------------------------------------
+// 2️⃣ Enable Middleware
+// ------------------------------------------------------
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
 
-// ---------------------------
-// 3️⃣  Data persistence setup
-// ---------------------------
+// ------------------------------------------------------
+// 3️⃣ Data Persistence Setup
+// ------------------------------------------------------
 var dataDir = Path.Combine(Directory.GetCurrentDirectory(), "data");
-if (!Directory.Exists(dataDir)) Directory.CreateDirectory(dataDir);
+if (!Directory.Exists(dataDir))
+    Directory.CreateDirectory(dataDir);
 
 string calorieFile = Path.Combine(dataDir, "calories.json");
 string exerciseFile = Path.Combine(dataDir, "exercises.json");
 string summaryFile = Path.Combine(dataDir, "summaries.json");
 string usersFile = Path.Combine(dataDir, "users.json");
 
+// Deserialize if existing, otherwise create new
 var calorieLogs = File.Exists(calorieFile)
     ? JsonSerializer.Deserialize<List<CalorieLog>>(File.ReadAllText(calorieFile)) ?? new()
     : new();
@@ -110,9 +111,9 @@ void SaveData<T>(string path, List<T> data)
     File.WriteAllText(path, json);
 }
 
-// ---------------------------
-// 4️⃣  Auth endpoints
-// ---------------------------
+// ------------------------------------------------------
+// 4️⃣ Authentication Endpoints
+// ------------------------------------------------------
 app.MapPost("/register", (User user) =>
 {
     if (users.Any(u => u.Username == user.Username))
@@ -147,11 +148,11 @@ app.MapPost("/login", (User credentials) =>
     return Results.Ok(new { token = jwt });
 });
 
-app.MapPost("/logout", () => Results.Ok(new { message = "Logged out successfully (handled client-side)" }));
+app.MapPost("/logout", () => Results.Ok(new { message = "Logged out successfully (client-side handled)" }));
 
-// ---------------------------
-// 5️⃣  Fitness tracking endpoints
-// ---------------------------
+// ------------------------------------------------------
+// 5️⃣ Fitness Tracker Endpoints
+// ------------------------------------------------------
 app.MapPost("/calories", (CalorieLog log, ClaimsPrincipal user) =>
 {
     if (user.Identity == null || !user.Identity.IsAuthenticated)
@@ -162,7 +163,7 @@ app.MapPost("/calories", (CalorieLog log, ClaimsPrincipal user) =>
     calorieLogs.Add(log);
     SaveData(calorieFile, calorieLogs);
 
-    return Results.Ok(new { message = "Calorie log saved successfully.", log });
+    return Results.Ok(new { message = "Calorie log saved successfully!", log });
 }).RequireAuthorization();
 
 app.MapPost("/exercises", (ExerciseLog log, ClaimsPrincipal user) =>
@@ -175,7 +176,7 @@ app.MapPost("/exercises", (ExerciseLog log, ClaimsPrincipal user) =>
     exerciseLogs.Add(log);
     SaveData(exerciseFile, exerciseLogs);
 
-    return Results.Ok(new { message = "Exercise saved successfully.", log });
+    return Results.Ok(new { message = "Exercise log saved successfully!", log });
 }).RequireAuthorization();
 
 app.MapGet("/summary", (ClaimsPrincipal user) =>
@@ -204,12 +205,19 @@ app.MapGet("/summary", (ClaimsPrincipal user) =>
     return Results.Ok(summary);
 }).RequireAuthorization();
 
-// ---------------------------
-// 6️⃣  Health check
-// ---------------------------
-app.MapGet("/health", () => Results.Ok(new { status = "ok", time = DateTime.Now }));
+// ------------------------------------------------------
+// 6️⃣ Health Check
+// ------------------------------------------------------
+app.MapGet("/health", () =>
+    Results.Ok(new { status = "ok", time = DateTime.Now }));
 
-// ---------------------------
-// 7️⃣  Run + open Swagger
-// ---------------------------
+// ------------------------------------------------------
+// 7️⃣ Frontend Hosting
+// ------------------------------------------------------
+app.UseDefaultFiles();  // looks for index.html
+app.UseStaticFiles();   // serves HTML, CSS, JS from wwwroot
+
+// ------------------------------------------------------
+// 8️⃣ Run Application
+// ------------------------------------------------------
 await app.RunAsync("http://localhost:8080");
