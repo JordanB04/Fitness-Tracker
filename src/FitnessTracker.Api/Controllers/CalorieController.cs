@@ -1,36 +1,75 @@
+using System;
+using System.Linq;
+using System.Security.Claims;
+using FitnessTracker.Api.Data;
+using FitnessTracker.Api.Dtos;
+using FitnessTracker.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FitnessTracker.Api.Models;
 
 namespace FitnessTracker.Api.Controllers
 {
     [ApiController]
-    [Route("calories")]
     [Authorize]
-    public class CalorieController : ControllerBase
+    [Route("api/[controller]")]
+    public class CaloriesController : ControllerBase
     {
-        private static readonly List<CalorieLog> Logs = new();
-
-        [HttpPost("add")]
-        public IActionResult AddLog([FromBody] CalorieLog log)
+        private int GetUserId()
         {
-            log.Date = DateTime.Now;
-            Logs.Add(log);
-            return Ok(new { message = "Log added successfully", log });
+            var sub = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(sub, out var id))
+            {
+                throw new InvalidOperationException("Invalid user id in token");
+            }
+            return id;
         }
 
-        [HttpGet("list")]
-        public IActionResult GetLogs(string username)
+        [HttpPost("log")]
+        public IActionResult LogCalories([FromBody] CalorieLogRequest req)
         {
-            var userLogs = Logs.Where(l => l.Username == username).ToList();
-            return Ok(userLogs);
+            var entry = new CalorieEntry
+            {
+                Id = FakeDatabase.NextCalorieId(),
+                UserId = GetUserId(),
+                MealName = req.MealName,
+                Calories = req.Calories,
+                Date = req.Date
+            };
+
+            FakeDatabase.Calories.Add(entry);
+            return Ok(entry);
         }
 
-        [HttpGet("summary")]
-        public IActionResult GetSummary(string username)
+        [HttpGet("history")]
+        public IActionResult GetHistory(DateTime? startDate, DateTime? endDate)
         {
-            var totalCalories = Logs.Where(l => l.Username == username).Sum(l => l.Calories);
-            return Ok(new { username, totalCalories });
+            int userId = GetUserId();
+
+            var from = startDate?.Date ?? DateTime.UtcNow.AddDays(-30).Date;
+            var to = endDate?.Date ?? DateTime.UtcNow.Date;
+
+            var calories = FakeDatabase.Calories
+                .Where(c => c.UserId == userId && c.Date.Date >= from && c.Date.Date <= to)
+                .ToList();
+
+            var exercises = FakeDatabase.Exercises
+                .Where(e => e.UserId == userId && e.Date.Date >= from && e.Date.Date <= to)
+                .ToList();
+
+            var result = calories
+                .GroupBy(c => c.Date.Date)
+                .Select(day => new CalorieHistoryItem
+                {
+                    Date = day.Key,
+                    TotalCaloriesConsumed = day.Sum(x => x.Calories),
+                    TotalCaloriesBurned = exercises
+                        .Where(e => e.Date.Date == day.Key)
+                        .Sum(e => e.CaloriesBurned)
+                })
+                .OrderBy(x => x.Date)
+                .ToList();
+
+            return Ok(result);
         }
     }
 }
