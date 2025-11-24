@@ -12,7 +12,7 @@ A lightweight **.NET 8 Minimal API** that tracks calories, exercises, and daily 
 ✅ Generate daily summaries (auto-saves to JSON)  
 ✅ Persistent data storage using local JSON files  
 ✅ Interactive API documentation (Swagger UI)  
-✅ Auto-launches Swagger on startup at [http://localhost:8080](http://localhost:8080)
+✅ Auto-launches Swagger on startup at http://localhost:8080/swagger
 
 ---
 
