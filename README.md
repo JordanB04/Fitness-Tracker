@@ -16,5 +16,8 @@ A lightweight **.NET 8 Minimal API** that tracks calories, exercises, and daily 
 
 ---
 
-## 🧱 Project Structure
+### 📘 User Manual
+The full User Manual is available in the Wiki:  
+https://github.com/Software-Design-Dev/Fitness-Tracker/wiki/User-Manual
+
 
