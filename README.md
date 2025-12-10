@@ -15,6 +15,10 @@ A lightweight **.NET 8 Minimal API** that tracks calories, exercises, and daily 
 ✅ Auto-launches Swagger on startup at http://localhost:8080/swagger
 
 ---
+### 📘 User Manual
+The full User Manual is available in the Wiki:  
+https://github.com/Software-Design-Dev/Fitness-Tracker/wiki/User-Manual
+
 
 ### 📘 User Manual
 The full User Manual is available in the Wiki:  
