@@ -1,0 +1,124 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FitnessTracker\FitnessTracker.csproj" />
+  </ItemGroup>
+
+</Project>
+
+
+
+
+
+ActivityTrackerTests
+
+using NUnit.Framework;
+
+namespace FitnessTracker.Tests
+{
+    public class ActivityTrackerTests
+    {
+        [Test]
+        public void AddSteps_ShouldIncreaseSteps()
+        {
+            var tracker = new ActivityTracker();
+            tracker.AddSteps(1000);
+
+            Assert.That(tracker.Steps, Is.EqualTo(1000));
+        }
+
+        [Test]
+        public void AddSteps_ShouldThrow_WhenNegative()
+        {
+            var tracker = new ActivityTracker();
+            Assert.Throws<ArgumentException>(() => tracker.AddSteps(-10));
+        }
+
+        [Test]
+        public void DistanceMiles_ShouldBeCorrect()
+        {
+            var tracker = new ActivityTracker();
+            tracker.AddSteps(2000);
+
+            Assert.That(tracker.DistanceMiles, Is.EqualTo(1.0));
+        }
+
+        [Test]
+        public void Reset_ShouldClearSteps()
+        {
+            var tracker = new ActivityTracker();
+            tracker.AddSteps(500);
+
+            tracker.Reset();
+
+            Assert.That(tracker.Steps, Is.EqualTo(0));
+        }
+    }
+}
+
+
+
+
+
+UserProfileTests
+
+using NUnit.Framework;
+
+namespace FitnessTracker.Tests
+{
+    public class UserProfileTests
+    {
+        [Test]
+        public void Constructor_ShouldAssignValues()
+        {
+            var user = new UserProfile("Ethan", 21, 160);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(user.Name, Is.EqualTo("Ethan"));
+                Assert.That(user.Age, Is.EqualTo(21));
+                Assert.That(user.Weight, Is.EqualTo(160));
+            });
+        }
+
+        [Test]
+        public void Constructor_ShouldThrow_WhenInvalid()
+        {
+            Assert.Throws<ArgumentException>(() => new UserProfile("", 21, 150));
+            Assert.Throws<ArgumentException>(() => new UserProfile("Ethan", -1, 150));
+            Assert.Throws<ArgumentException>(() => new UserProfile("Ethan", 21, 0));
+        }
+
+        [Test]
+        public void UpdateWeight_ShouldChangeWeight()
+        {
+            var user = new UserProfile("Ethan", 21, 160);
+
+            user.UpdateWeight(170);
+
+            Assert.That(user.Weight, Is.EqualTo(170));
+        }
+
+        [Test]
+        public void UpdateWeight_ShouldThrow_WhenInvalid()
+        {
+            var user = new UserProfile("Ethan", 21, 160);
+
+            Assert.Throws<ArgumentException>(() => user.UpdateWeight(-5));
+        }
+    }
+}
+
