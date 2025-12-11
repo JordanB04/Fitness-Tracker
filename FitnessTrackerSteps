@@ -1,0 +1,54 @@
+namespace FitnessTracker
+{
+    public class ActivityTracker
+    {
+        public int Steps { get; private set; }
+        public double DistanceMiles => Steps * 0.0005;
+
+        public void AddSteps(int steps)
+        {
+            if (steps < 0)
+                throw new ArgumentException("Steps cannot be negative.");
+
+            Steps += steps;
+        }
+
+        public void Reset()
+        {
+            Steps = 0;
+        }
+    }
+}
+
+User  Profile
+namespace FitnessTracker
+{
+    public class UserProfile
+    {
+        public string Name { get; }
+        public int Age { get; }
+        public double Weight { get; private set; }
+
+        public UserProfile(string name, int age, double weight)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name cannot be empty.");
+            if (age < 0)
+                throw new ArgumentException("Age cannot be negative.");
+            if (weight <= 0)
+                throw new ArgumentException("Weight must be positive.");
+
+            Name = name;
+            Age = age;
+            Weight = weight;
+        }
+
+        public void UpdateWeight(double newWeight)
+        {
+            if (newWeight <= 0)
+                throw new ArgumentException("Weight must be positive.");
+
+            Weight = newWeight;
+        }
+    }
+}
