@@ -19,3 +19,36 @@ namespace FitnessTracker
         }
     }
 }
+
+User  Profile
+namespace FitnessTracker
+{
+    public class UserProfile
+    {
+        public string Name { get; }
+        public int Age { get; }
+        public double Weight { get; private set; }
+
+        public UserProfile(string name, int age, double weight)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException("Name cannot be empty.");
+            if (age < 0)
+                throw new ArgumentException("Age cannot be negative.");
+            if (weight <= 0)
+                throw new ArgumentException("Weight must be positive.");
+
+            Name = name;
+            Age = age;
+            Weight = weight;
+        }
+
+        public void UpdateWeight(double newWeight)
+        {
+            if (newWeight <= 0)
+                throw new ArgumentException("Weight must be positive.");
+
+            Weight = newWeight;
+        }
+    }
+}
