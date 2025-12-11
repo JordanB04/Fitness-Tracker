@@ -1,0 +1,21 @@
+namespace FitnessTracker
+{
+    public class ActivityTracker
+    {
+        public int Steps { get; private set; }
+        public double DistanceMiles => Steps * 0.0005;
+
+        public void AddSteps(int steps)
+        {
+            if (steps < 0)
+                throw new ArgumentException("Steps cannot be negative.");
+
+            Steps += steps;
+        }
+
+        public void Reset()
+        {
+            Steps = 0;
+        }
+    }
+}
